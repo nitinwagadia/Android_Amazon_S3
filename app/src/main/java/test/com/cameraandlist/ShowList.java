@@ -1,7 +1,9 @@
 package test.com.cameraandlist;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.widget.ListView;
 
@@ -18,7 +20,8 @@ public class ShowList extends ListActivity {
     ListView list;
     ProgressDialog progressDialog;
     MyCustomAdapter adapter;
-    int i=0;
+    int i = 0;
+
     public static void DataInilialization(List<DataModel> data) {
         ShowList.data = data;
     }
@@ -27,12 +30,32 @@ public class ShowList extends ListActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_list);
+        AlertDialog.Builder alert=new AlertDialog.Builder(this);
+
+
         progressDialog = ProgressDialog.show(ShowList.this, "Loading List", "Please Wait!");
         list = (ListView) findViewById(android.R.id.list);
-        adapter=new MyCustomAdapter(this,data);
+        adapter = new MyCustomAdapter(this, data);
         setListAdapter(adapter);
 
-        for(DataModel obj : data) {
+        if(data.isEmpty())
+        {
+
+            alert.setMessage("No File in the Server");
+            alert.setTitle("Error");
+            alert.setPositiveButton("Ok",new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    finish();
+                }
+            });
+
+            alert.show();
+        }
+
+
+
+        for (DataModel obj : data) {
             obj.loadData(adapter, data.get(i).getUrl());
             i++;
         }
@@ -40,7 +63,6 @@ public class ShowList extends ListActivity {
             progressDialog.dismiss();
 
     }
-
 
 
 }

@@ -21,6 +21,8 @@ import java.util.Locale;
 
 import de.greenrobot.event.EventBus;
 import test.com.cameraandlist.MyApplication;
+import test.com.models.closeUpdate;
+import test.com.models.closeUpload;
 
 /**
  * Created by nitin on 4/11/15.
@@ -46,7 +48,7 @@ public class UploadModel extends TransferModel {
                     mStatus = Status.COMPLETED;
                     if (mFile != null) {
                         mFile.delete();
-                        EventBus.getDefault().post(new CloseDialog());
+                        EventBus.getDefault().post(new closeUpload());
                     }
                 }
             }

@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -31,8 +33,15 @@ import test.com.aws.support.TransferController;
 import test.com.aws.support.TransferModel;
 import test.com.aws.support.Util;
 import test.com.models.DataModel;
+import test.com.models.closeUpdate;
+import test.com.models.closeUpload;
+import test.com.models.openUpdate;
+import test.com.models.openUpload;
 
 public class MainActivity extends ActionBarActivity {
+
+
+
 
     static final int IMAGE_STATUS = 1;
     static final int PICK_IMAGE = 2;
@@ -40,15 +49,14 @@ public class MainActivity extends ActionBarActivity {
     Button camera, gallery, list;
     ImageView mImageView;
     File photoFile = null;
-    List<DataModel> data;
+    List<DataModel> data=Collections.emptyList();
     private AmazonS3 mClient;
-    private ProgressDialog progressDialog;
+    private ProgressDialog progressDialog,backgroundDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        data = new ArrayList<DataModel>();
         mClient = Util.getS3Client(this);
         EventBus.getDefault().register(this);
 
@@ -129,20 +137,42 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    public void onEventMainThread(TransferModel.ShowDialog s) {
-        progressDialog = ProgressDialog.show(MainActivity.this, "Please Wait", "Uploading Photo!");
+    public void onEventMainThread(openUpdate s) {
+        progressDialog=null;
+        progressDialog = ProgressDialog.show(MainActivity.this, "Please Wait", "Updating!");
     }
 
-    public void onEventMainThread(TransferModel.CloseDialog c) {
+    public void onEventMainThread(closeUpdate c) {
         if (progressDialog != null)
             progressDialog.dismiss();
+        progressDialog=null;
+    }
+
+    public void onEventMainThread(openUpload s) {
+        backgroundDialog=null;
+        backgroundDialog = ProgressDialog.show(MainActivity.this, "Please Wait", "Uploading your Awesome Pic!");
+    }
+
+    public void onEventMainThread(closeUpload c) {
+        if (backgroundDialog!= null)
+            backgroundDialog.dismiss();
+        backgroundDialog=null;
     }
 
 
     class GetDataInformation extends AsyncTask<Void, Void, Void> {
 
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            EventBus.getDefault().post(new openUpdate());
+        }
+
         @Override
         protected Void doInBackground(Void... params) {
+            data = new ArrayList<DataModel>();
             int i = 0;
             List<S3ObjectSummary> Clientdata = mClient.listObjects(Constants.BUCKET_NAME.toLowerCase(Locale.US),
                     Util.getPrefix(
@@ -158,6 +188,13 @@ public class MainActivity extends ActionBarActivity {
             return null;
         }
 
-
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            EventBus.getDefault().post(new closeUpdate());
+        }
     }
+
+
 }
+

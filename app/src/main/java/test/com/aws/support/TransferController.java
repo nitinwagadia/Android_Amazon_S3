@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.net.Uri;
 
 import de.greenrobot.event.EventBus;
+import test.com.cameraandlist.MainActivity;
+import test.com.models.openUpdate;
+import test.com.models.openUpload;
 
 /**
  * Created by nitin on 4/11/15.
@@ -18,7 +21,7 @@ public class TransferController
         Intent intent=new Intent(context,NetworkService.class);
         intent.setAction(Intent.ACTION_SEND);
         intent.setData(pickedImage);
-        EventBus.getDefault().post(new TransferModel.ShowDialog());
+        EventBus.getDefault().post(new openUpload());
         context.startService(intent);
 
     }
@@ -29,4 +32,6 @@ public class TransferController
         intent.putExtra(NetworkService.S3_KEYS_EXTRA,keys);
         context.startService(intent);
     }*/
+
+
 }
