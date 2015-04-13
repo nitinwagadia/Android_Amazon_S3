@@ -1,7 +1,9 @@
 package test.com.cameraandlist;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -9,6 +11,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -45,7 +48,7 @@ public class MainActivity extends ActionBarActivity {
 
     static final int IMAGE_STATUS = 1;
     static final int PICK_IMAGE = 2;
-
+    public static int id =0;
     Button camera, gallery, list;
     ImageView mImageView;
     File photoFile = null;
@@ -98,6 +101,22 @@ public class MainActivity extends ActionBarActivity {
 
     }
 
+    private void writeSharedPreferences() {
+        SharedPreferences.Editor editor = getSharedPreferences("Count Value", MODE_PRIVATE).edit();
+        MainActivity.id+=1;
+        Toast.makeText(MainActivity.this,"Write Value is "+MainActivity.id+"",Toast.LENGTH_SHORT).show();
+        editor.putInt("value", MainActivity.id);
+        editor.commit();
+    }
+
+    private void readSharedPreference() {
+
+        SharedPreferences sharedPreferences=MyApplication.getInstance().getSharedPreferences("Count Value", Context.MODE_PRIVATE);
+        MainActivity.id=sharedPreferences.getInt("value",0);
+        Toast.makeText(MainActivity.this,"read Value is "+MainActivity.id+"",Toast.LENGTH_SHORT).show();
+        Log.i("Value of Id is",MainActivity.id+"");
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -109,8 +128,9 @@ public class MainActivity extends ActionBarActivity {
             mImageView.setImageBitmap(imageBitmap);
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-
-            File file = new File(Environment.getExternalStorageDirectory() + File.separator + "image.jpg");
+            readSharedPreference();
+            File file = new File(Environment.getExternalStorageDirectory() +"/myimage"+MainActivity.id+".jpg");
+            Toast.makeText(MainActivity.this,"File name is"+file.getName(),Toast.LENGTH_LONG);
             try {
                 file.createNewFile();
                 FileOutputStream fo = new FileOutputStream(file);
@@ -120,7 +140,7 @@ public class MainActivity extends ActionBarActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
+            writeSharedPreferences();
             TransferController.upload(this, Uri.fromFile(file));
             new GetDataInformation().execute();
 
@@ -167,7 +187,12 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            EventBus.getDefault().post(new openUpdate());
+
+            //EventBus.getDefault().post(new openUpdate());
+            progressDialog=null;
+
+            Toast.makeText(MainActivity.this,"I am in PreExecute",Toast.LENGTH_LONG).show();
+            progressDialog = ProgressDialog.show(MainActivity.this, "Please Wait", "Updating!");
         }
 
         @Override
@@ -180,6 +205,7 @@ public class MainActivity extends ActionBarActivity {
 
             DataModel current;
             for (S3ObjectSummary obj : Clientdata) {
+                Log.i("I got data ", obj.getKey());
                 current = new DataModel(obj.getKey(), null, "I am Image " + (i + 1));
                 data.add(current);
                 i++;
@@ -191,7 +217,10 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            EventBus.getDefault().post(new closeUpdate());
+            //EventBus.getDefault().post(new closeUpdate());
+            if (progressDialog != null)
+                progressDialog.dismiss();
+            progressDialog=null;
         }
     }
 
